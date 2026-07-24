@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="serviceName" value="ikanobank-onboarding-backend"/>
+    <property name="CONSOLE_PATTERN"
+              value="%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level service=${serviceName} traceId=%X{traceId:-none} applicationId=%X{applicationId:-none} productCode=%X{productCode:-none} country=%X{country:-none} customerType=%X{customerType:-none} channel=%X{channel:-none} logger=%logger{36} msg=&quot;%replace(%msg){'[\r\n]+',' '}&quot;%n"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <logger name="com.ikanobank.onboarding" level="DEBUG"/>
+    <logger name="software.amazon.awssdk" level="WARN"/>
+</configuration>

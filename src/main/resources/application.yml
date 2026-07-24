@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: ikanobank-onboarding-backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:}
+    username: ${SPRING_DATASOURCE_USERNAME:}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration/mysql
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+  endpoint:
+    health:
+      show-details: always
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+app:
+  temporal:
+    enabled: ${TEMPORAL_ENABLED:false}
+    target: ${TEMPORAL_TARGET:localhost:7233}
+    namespace: ${TEMPORAL_NAMESPACE:default}
+    task-queue: ${TEMPORAL_TASK_QUEUE:onboarding}
+  mock-data:
+    path: ${IKANOBANK_MOCK_DATA_PATH:mock-data}
+  logging:
+    mask-sensitive-values: true
+
+logging:
+  config: classpath:logback.xml

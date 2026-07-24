@@ -1,0 +1,822 @@
+openapi: 3.0.3
+info:
+  title: Ikano Onboarding API
+  version: 1.0.0
+  description: 'Contract-first API for an Ikano-style adaptive onboarding journey. The API supports country and applicant-type flow selection, step validation, deterministic mock checks, manual review, agreement creation, click-to-sign, account setup and auditability.'
+servers:
+  - url: http://localhost:8080
+tags:
+  - name: Flows
+    description: Country/customer-type onboarding flow discovery.
+  - name: Applications
+    description: Application lifecycle, step submission and status retrieval.
+  - name: Decisioning
+    description: Mocked checks, submission, manual review and final decisioning.
+  - name: Fulfilment
+    description: Agreement creation, signing and account setup.
+  - name: Audit
+    description: Application audit trail.
+paths:
+  "/api/v1/flows":
+    get:
+      tags:
+        - Flows
+      operationId: listFlows
+      summary: List configured onboarding flows
+      description: Returns configured onboarding flows for Sweden, Spain and Poland across private and business applicants.
+      responses:
+        '200':
+          description: Available onboarding flows.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/FlowDefinition"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/flows/{country}/{type}":
+    get:
+      tags:
+        - Flows
+      operationId: getFlow
+      summary: Get one onboarding flow
+      description: Returns ordered journey steps for the selected country and customer type.
+      parameters:
+        - "$ref": "#/components/parameters/Country"
+        - name: type
+          in: path
+          required: true
+          schema:
+            "$ref": "#/components/schemas/CustomerType"
+      responses:
+        '200':
+          description: Selected onboarding flow.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/FlowDefinition"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/flows/{country}/{type}/steps/{stepCode}/required-fields":
+    get:
+      tags:
+        - Flows
+      operationId: getRequiredFields
+      summary: Get required fields for a step
+      description: Returns backend-required field names for the selected step.
+      parameters:
+        - "$ref": "#/components/parameters/Country"
+        - name: type
+          in: path
+          required: true
+          schema:
+            "$ref": "#/components/schemas/CustomerType"
+        - name: stepCode
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-z][a-z0-9-]{1,40}$"
+      responses:
+        '200':
+          description: Required fields for the selected step.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications":
+    post:
+      tags:
+        - Applications
+      operationId: createApplication
+      summary: Create onboarding application
+      description: Creates a new onboarding application and an opaque resume token.
+      parameters:
+        - "$ref": "#/components/parameters/TransactionId"
+        - "$ref": "#/components/parameters/ProductCode"
+        - "$ref": "#/components/parameters/Channel"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/CreateApplicationRequest"
+      responses:
+        '201':
+          description: Created application and resume token.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/CreateApplicationResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/resume":
+    post:
+      tags:
+        - Applications
+      operationId: resumeApplication
+      summary: Resume onboarding application
+      description: Looks up an application using an opaque resume token. The raw token is never stored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ResumeApplicationRequest"
+      responses:
+        '200':
+          description: Resumed application.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApplicationResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}":
+    get:
+      tags:
+        - Applications
+      operationId: getApplication
+      summary: Get application status
+      description: Returns the current application state and decision reason, if any.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      responses:
+        '200':
+          description: Application.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApplicationResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/steps/{stepCode}":
+    put:
+      tags:
+        - Applications
+      operationId: submitStep
+      summary: Submit one onboarding step
+      description: 'Persists answers for a single step and advances the application state. Backend validation enforces required fields, identifier formats, consent/terms acceptance, age checks and affordability sanity checks.'
+      parameters:
+        - "$ref": "#/components/parameters/TransactionId"
+        - "$ref": "#/components/parameters/ProductCode"
+        - "$ref": "#/components/parameters/Channel"
+        - "$ref": "#/components/parameters/ApplicationId"
+        - name: stepCode
+          in: path
+          required: true
+          description: Step code from the selected flow, for example `identity`, `financial`, `company` or `review`.
+          schema:
+            type: string
+            pattern: "^[a-z][a-z0-9-]{1,40}$"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/SubmitStepRequest"
+      responses:
+        '200':
+          description: Updated application state.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApplicationResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/checks":
+    post:
+      tags:
+        - Decisioning
+      operationId: runChecks
+      summary: Run deterministic mocked checks
+      description: Runs local JSON mock checks such as KYC/KYB, sanctions, credit bureau, registry and bank-account verification.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      responses:
+        '200':
+          description: Integration results.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/IntegrationResultResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/submit":
+    post:
+      tags:
+        - Decisioning
+      operationId: submitApplication
+      summary: Submit application for decision
+      description: Converts check results into `AGREEMENT_CREATED`, `MANUAL_REVIEW` or `DECLINED`.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      responses:
+        '200':
+          description: Final decision.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApplicationResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/manual-override":
+    post:
+      tags:
+        - Decisioning
+      operationId: manualOverride
+      summary: Execute manual review decision
+      description: Allows operations to approve, decline or cancel an application that is currently in manual review.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              "$ref": "#/components/schemas/ManualOverrideRequest"
+      responses:
+        '200':
+          description: Application after manual override.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/ApplicationResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/agreement":
+    post:
+      tags:
+        - Fulfilment
+      operationId: createAgreement
+      summary: Create agreement
+      description: Creates a mock agreement for an approved application before signing.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      responses:
+        '200':
+          description: Agreement integration result.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/IntegrationResultResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/agreement/sign-later":
+    post:
+      tags:
+        - Fulfilment
+      operationId: signLater
+      summary: Defer signing
+      description: Records that the customer wants to sign the agreement later.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      responses:
+        '200':
+          description: Sign-later result.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/IntegrationResultResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/agreement/sign":
+    post:
+      tags:
+        - Fulfilment
+      operationId: signAgreement
+      summary: Click-to-sign agreement
+      description: Signs the generated agreement using the demo click-to-sign flow.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      responses:
+        '200':
+          description: Signing result.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/IntegrationResultResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/account-setup":
+    post:
+      tags:
+        - Fulfilment
+      operationId: setupAccount
+      summary: Finish account setup
+      description: Runs mock account setup after signing and moves successful applications to final `APPROVED` state.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      responses:
+        '200':
+          description: Account setup result.
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/IntegrationResultResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+  "/api/v1/applications/{applicationId}/audit-events":
+    get:
+      tags:
+        - Audit
+      operationId: getAuditEvents
+      summary: Get application audit events
+      description: Returns lifecycle and decision audit events for supportability and traceability.
+      parameters:
+        - "$ref": "#/components/parameters/ApplicationId"
+      responses:
+        '200':
+          description: Audit history.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/AuditEventResponse"
+        '400':
+          "$ref": "#/components/responses/BadRequest"
+        '403':
+          "$ref": "#/components/responses/Forbidden"
+        '404':
+          "$ref": "#/components/responses/NotFound"
+        '409':
+          "$ref": "#/components/responses/Conflict"
+        '500':
+          "$ref": "#/components/responses/InternalServerError"
+components:
+  parameters:
+    Country:
+      name: country
+      in: path
+      required: true
+      description: Market selected by the applicant.
+      schema:
+        "$ref": "#/components/schemas/Country"
+    ApplicationId:
+      name: applicationId
+      in: path
+      required: true
+      description: Human-readable UUID stored as `char(36)` in MySQL.
+      schema:
+        type: string
+        format: uuid
+    TransactionId:
+      name: X-Transaction-Id
+      in: header
+      required: false
+      description: Caller-supplied transaction ID for cross-system traceability. Must not contain PII.
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 100
+        pattern: "^[A-Za-z0-9._:-]+$"
+    ProductCode:
+      name: X-Product-Code
+      in: header
+      required: false
+      description: Product context for logs and product-level workflow routing.
+      schema:
+        type: string
+        enum:
+          - IKANO_ONBOARDING_LOAN
+          - IKANO_BUSINESS_ACCOUNT
+    Channel:
+      name: X-Channel
+      in: header
+      required: false
+      description: Originating channel. Current demo mainly uses `WEB`.
+      schema:
+        type: string
+        enum:
+          - WEB
+          - POSTMAN
+          - API
+  schemas:
+    Country:
+      type: string
+      description: Market selected by the applicant.
+      enum:
+        - SWEDEN
+        - SPAIN
+        - POLAND
+    CustomerType:
+      type: string
+      description: Applicant type selected at the start of the journey.
+      enum:
+        - PRIVATE_INDIVIDUAL
+        - BUSINESS
+    ApplicationStatus:
+      type: string
+      enum:
+        - CREATED
+        - INITIATED
+        - IN_PROGRESS
+        - KYC
+        - IDV
+        - READY_FOR_REVIEW
+        - MANUAL_REVIEW
+        - DECLINED
+        - AGREEMENT_CREATED
+        - SIGNING_PENDING
+        - AGREEMENT_SIGNED
+        - ACCOUNT_SETUP_COMPLETE
+        - APPROVED
+        - CANCELLED
+        - EXPIRED
+        - ABANDONED
+    CheckOutcome:
+      type: string
+      description: Deterministic mocked provider outcome.
+      enum:
+        - PASS
+        - MANUAL_REVIEW
+        - FAIL
+        - UNAVAILABLE
+    CreateApplicationRequest:
+      type: object
+      description: Initial country/customer-type selection and deterministic mock scenario key.
+      required:
+        - country
+        - customerType
+      properties:
+        country:
+          "$ref": "#/components/schemas/Country"
+        customerType:
+          "$ref": "#/components/schemas/CustomerType"
+        scenarioKey:
+          type: string
+          description: Mock scenario key. Use `default` for approved, or keys such as `2222`, `3333`, `4444`, `5555`, `7777`, `8888`, `9999`, `1212`.
+          minLength: 1
+          maxLength: 40
+          pattern: "^[A-Za-z0-9_-]+$"
+          example: default
+    ResumeApplicationRequest:
+      type: object
+      description: Resume-token request. The token is opaque and should be stored client-side only.
+      required:
+        - resumeToken
+      properties:
+        resumeToken:
+          type: string
+          minLength: 32
+          maxLength: 512
+    SubmitStepRequest:
+      type: object
+      description: 'Step answers keyed by field name. Required fields depend on country, customer type and step code. Backend rules validate identifier formats, minimum age where date of birth is available, email format, consent flags, salary and debt-to-income sanity checks.'
+      required:
+        - answers
+      properties:
+        answers:
+          type: object
+          minProperties: 1
+          additionalProperties: true
+          example:
+            personalNumber: 19940608-1111
+            email: customer.demo@example.com
+            monthlyIncome: '42000'
+            monthlyDebt: '2500'
+    ManualOverrideRequest:
+      type: object
+      description: Operations decision for applications referred to manual review.
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          description: Allowed target state from manual review.
+          enum:
+            - AGREEMENT_CREATED
+            - DECLINED
+            - CANCELLED
+        reason:
+          type: string
+          description: Non-sensitive operational reason or policy note.
+          minLength: 3
+          maxLength: 500
+    CreateApplicationResponse:
+      type: object
+      required:
+        - application
+        - resumeToken
+      properties:
+        application:
+          "$ref": "#/components/schemas/ApplicationResponse"
+        resumeToken:
+          type: string
+          description: Opaque one-time display token used to resume the journey.
+    ApplicationResponse:
+      type: object
+      required:
+        - id
+        - country
+        - customerType
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Human-readable application UUID.
+        country:
+          "$ref": "#/components/schemas/Country"
+        customerType:
+          "$ref": "#/components/schemas/CustomerType"
+        currentStepCode:
+          type: string
+          pattern: "^[a-z][a-z0-9-]{1,40}$"
+        status:
+          "$ref": "#/components/schemas/ApplicationStatus"
+        scenarioKey:
+          type: string
+          description: Deterministic mock scenario key used for external check outcomes.
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        submittedAt:
+          type: string
+          format: date-time
+        decisionReason:
+          type: string
+          description: Policy reason or note for decision/manual review/decline.
+    FlowDefinition:
+      type: object
+      properties:
+        country:
+          "$ref": "#/components/schemas/Country"
+        customerType:
+          "$ref": "#/components/schemas/CustomerType"
+        steps:
+          type: array
+          minItems: 1
+          items:
+            "$ref": "#/components/schemas/FlowStepDefinition"
+    FlowStepDefinition:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Stable step code used in the step submission endpoint.
+          pattern: "^[a-z][a-z0-9-]{1,40}$"
+        order:
+          type: integer
+          minimum: 1
+        title:
+          type: string
+          minLength: 2
+        fields:
+          type: array
+          items:
+            type: string
+        integrations:
+          type: array
+          items:
+            type: string
+    IntegrationResultResponse:
+      type: object
+      properties:
+        integrationType:
+          type: string
+          description: Mock provider boundary, for example `identity`, `sanctions`, `credit`, `registry`, `agreement`, `signing`.
+        outcome:
+          "$ref": "#/components/schemas/CheckOutcome"
+        reasonCode:
+          type: string
+          description: Machine-readable policy/provider reason code.
+        message:
+          type: string
+          description: Human-readable non-sensitive note for demo and operations.
+        checkedAt:
+          type: string
+          format: date-time
+    AuditEventResponse:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        resultCode:
+          type: string
+        occurredAt:
+          type: string
+          format: date-time
+    ErrorResponse:
+      type: object
+      description: Standard non-sensitive error response returned by the API.
+      required:
+        - timestamp
+        - status
+        - error
+        - message
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+          format: int32
+        error:
+          type: string
+        message:
+          type: string
+        requestId:
+          type: string
+          nullable: true
+          description: Request correlation ID from MDC/logs.
+  responses:
+    BadRequest:
+      description: Validation failure or malformed request. Covers missing fields, invalid enum values, invalid regex formats, failed age/salary checks and invalid step answers.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                timestamp: '2026-07-23T10:15:30Z'
+                status: 400
+                error: Validation failure or malformed request
+                message: Validation failure or malformed request
+                requestId: req-demo-123
+    Forbidden:
+      description: Request is understood but not allowed for the current caller/context.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                timestamp: '2026-07-23T10:15:30Z'
+                status: 403
+                error: Request is understood but not allowed for the current caller/context
+                message: Request is understood but not allowed for the current caller/context
+                requestId: req-demo-123
+    NotFound:
+      description: Requested flow, application or resource was not found.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                timestamp: '2026-07-23T10:15:30Z'
+                status: 404
+                error: Requested flow, application or resource was not found
+                message: Requested flow, application or resource was not found
+                requestId: req-demo-123
+    Conflict:
+      description: Application is not in the required lifecycle state for this operation.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                timestamp: '2026-07-23T10:15:30Z'
+                status: 409
+                error: Application is not in the required lifecycle state for this operation
+                message: Application is not in the required lifecycle state for this operation
+                requestId: req-demo-123
+    InternalServerError:
+      description: Unexpected server error. Response does not expose sensitive implementation details.
+      content:
+        application/json:
+          schema:
+            "$ref": "#/components/schemas/ErrorResponse"
+          examples:
+            default:
+              value:
+                timestamp: '2026-07-23T10:15:30Z'
+                status: 500
+                error: Unexpected server error
+                message: Unexpected server error
+                requestId: req-demo-123
