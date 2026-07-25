@@ -1,0 +1,27 @@
+country: SWEDEN
+customerType: BUSINESS
+steps:
+  - order: 1
+    code: company
+    title: "Company information"
+    integrations: [registry]
+  - order: 2
+    code: representative
+    title: "Representative and signatory"
+    integrations: [identity]
+  - order: 3
+    code: owners
+    title: "Beneficial owners"
+    integrations: [identity, sanctions]
+  - order: 4
+    code: business
+    title: "Business activity and expected usage"
+    integrations: []
+  - order: 5
+    code: decision
+    title: "KYB and credit checks"
+    integrations: [credit]
+  - order: 6
+    code: review
+    title: "Review and submit"
+    integrations: []

@@ -1,0 +1,27 @@
+country: SPAIN
+customerType: BUSINESS
+steps:
+  - order: 1
+    code: company
+    title: "Company NIF and registry"
+    integrations: [registry]
+  - order: 2
+    code: representative
+    title: "Legal representative"
+    integrations: [identity]
+  - order: 3
+    code: owners
+    title: "Beneficial owners"
+    integrations: [identity, sanctions]
+  - order: 4
+    code: business
+    title: "Sector, turnover and tax details"
+    integrations: []
+  - order: 5
+    code: decision
+    title: "Business credit and account validation"
+    integrations: [credit, bank-account]
+  - order: 6
+    code: review
+    title: "Review and submit"
+    integrations: []

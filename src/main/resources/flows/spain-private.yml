@@ -1,0 +1,23 @@
+country: SPAIN
+customerType: PRIVATE_INDIVIDUAL
+steps:
+  - order: 1
+    code: identity
+    title: "DNI/NIE identity verification"
+    integrations: [identity]
+  - order: 2
+    code: contact
+    title: "Contact, province and address"
+    integrations: [address]
+  - order: 3
+    code: compliance
+    title: "Consent and declarations"
+    integrations: [sanctions]
+  - order: 4
+    code: financial
+    title: "Employment and affordability"
+    integrations: [credit]
+  - order: 5
+    code: review
+    title: "Review and submit"
+    integrations: []
