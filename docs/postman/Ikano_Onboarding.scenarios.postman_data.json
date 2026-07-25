@@ -1,0 +1,107 @@
+[
+  {
+    "scenarioName": "Sweden private approved",
+    "country": "SWEDEN",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "default",
+    "expectedFinalStatus": "AGREEMENT_CREATED"
+  },
+  {
+    "scenarioName": "Spain private approved",
+    "country": "SPAIN",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "default",
+    "expectedFinalStatus": "AGREEMENT_CREATED"
+  },
+  {
+    "scenarioName": "Poland private approved",
+    "country": "POLAND",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "default",
+    "expectedFinalStatus": "AGREEMENT_CREATED"
+  },
+  {
+    "scenarioName": "Sweden business approved",
+    "country": "SWEDEN",
+    "customerType": "BUSINESS",
+    "scenarioKey": "default",
+    "expectedFinalStatus": "AGREEMENT_CREATED"
+  },
+  {
+    "scenarioName": "Spain business approved",
+    "country": "SPAIN",
+    "customerType": "BUSINESS",
+    "scenarioKey": "default",
+    "expectedFinalStatus": "AGREEMENT_CREATED"
+  },
+  {
+    "scenarioName": "Poland business approved",
+    "country": "POLAND",
+    "customerType": "BUSINESS",
+    "scenarioKey": "default",
+    "expectedFinalStatus": "AGREEMENT_CREATED"
+  },
+  {
+    "scenarioName": "Private identity manual review",
+    "country": "SWEDEN",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "2222",
+    "expectedFinalStatus": "MANUAL_REVIEW"
+  },
+  {
+    "scenarioName": "Private identity rejected",
+    "country": "SWEDEN",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "3333",
+    "expectedFinalStatus": "DECLINED"
+  },
+  {
+    "scenarioName": "Private sanctions manual review",
+    "country": "SPAIN",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "4444",
+    "expectedFinalStatus": "MANUAL_REVIEW"
+  },
+  {
+    "scenarioName": "Private sanctions rejected",
+    "country": "POLAND",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "5555",
+    "expectedFinalStatus": "DECLINED"
+  },
+  {
+    "scenarioName": "Private credit manual review",
+    "country": "SWEDEN",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "6666",
+    "expectedFinalStatus": "MANUAL_REVIEW"
+  },
+  {
+    "scenarioName": "Private credit rejected",
+    "country": "SPAIN",
+    "customerType": "PRIVATE_INDIVIDUAL",
+    "scenarioKey": "7777",
+    "expectedFinalStatus": "DECLINED"
+  },
+  {
+    "scenarioName": "Business registry manual review",
+    "country": "SWEDEN",
+    "customerType": "BUSINESS",
+    "scenarioKey": "8888",
+    "expectedFinalStatus": "MANUAL_REVIEW"
+  },
+  {
+    "scenarioName": "Business registry rejected",
+    "country": "SPAIN",
+    "customerType": "BUSINESS",
+    "scenarioKey": "9999",
+    "expectedFinalStatus": "DECLINED"
+  },
+  {
+    "scenarioName": "Business bank account manual review",
+    "country": "POLAND",
+    "customerType": "BUSINESS",
+    "scenarioKey": "1212",
+    "expectedFinalStatus": "MANUAL_REVIEW"
+  }
+]

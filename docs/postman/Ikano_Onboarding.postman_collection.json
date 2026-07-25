@@ -1,0 +1,497 @@
+{
+  "info": {
+    "name": "Ikano Onboarding Backend",
+    "description": "Collection Runner only: executes one onboarding scenario per data row, in strict order. Utilities are documented in RUNBOOK.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "Run Scenario - Create Application",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('country', pm.iterationData.get('country') || pm.collectionVariables.get('country') || 'SWEDEN');",
+              "pm.collectionVariables.set('customerType', pm.iterationData.get('customerType') || pm.collectionVariables.get('customerType') || 'PRIVATE_INDIVIDUAL');",
+              "pm.collectionVariables.set('scenarioKey', pm.iterationData.get('scenarioKey') || pm.collectionVariables.get('scenarioKey') || 'default');",
+              "pm.collectionVariables.set('expectedFinalStatus', pm.iterationData.get('expectedFinalStatus') || pm.collectionVariables.get('expectedFinalStatus') || 'AGREEMENT_CREATED');",
+              "pm.collectionVariables.set('scenarioName', pm.iterationData.get('scenarioName') || 'Ad hoc scenario');"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('created application', function () { pm.response.to.have.status(201); });",
+              "const body = pm.response.json();",
+              "pm.collectionVariables.set('applicationId', body.application.id);",
+              "pm.collectionVariables.set('resumeToken', body.resumeToken);",
+              "pm.collectionVariables.set('stepIndex', '0');",
+              "postman.setNextRequest('Run Scenario - Resume Application');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"country\": \"{{country}}\",\n  \"customerType\": \"{{customerType}}\",\n  \"scenarioKey\": \"{{scenarioKey}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/applications"
+      }
+    },
+    {
+      "name": "Run Scenario - Resume Application",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('resume token works', function () { pm.response.to.have.status(200); });",
+              "pm.test('resumed expected application', function () {",
+              "  pm.expect(pm.response.json().id).to.eql(pm.collectionVariables.get('applicationId'));",
+              "});",
+              "postman.setNextRequest('Run Scenario - Get Selected Flow');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"resumeToken\": \"{{resumeToken}}\"\n}"
+        },
+        "url": "{{baseUrl}}/api/v1/applications/resume"
+      }
+    },
+    {
+      "name": "Run Scenario - Get Selected Flow",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('selected flow returned', function () { pm.response.to.have.status(200); });",
+              "const flow = pm.response.json();",
+              "pm.collectionVariables.set('flowSteps', JSON.stringify(flow.steps));",
+              "pm.collectionVariables.set('stepIndex', '0');",
+              "postman.setNextRequest('Run Scenario - Submit Next Step');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/flows/{{country}}/{{customerType}}",
+        "header": [
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Run Scenario - Submit Next Step",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const country = pm.collectionVariables.get('country');",
+              "const customerType = pm.collectionVariables.get('customerType');",
+              "const steps = JSON.parse(pm.collectionVariables.get('flowSteps') || '[]');",
+              "const index = Number(pm.collectionVariables.get('stepIndex') || '0');",
+              "const step = steps[index];",
+              "if (!step) { postman.setNextRequest('Run Scenario - Run Checks'); }",
+              "const answersFor = (country, customerType, stepCode) => {",
+              "  if (customerType === 'PRIVATE_INDIVIDUAL') {",
+              "    if (stepCode === 'identity') {",
+              "      if (country === 'SWEDEN') return { personalNumber: '19940608-1111' };",
+              "      if (country === 'SPAIN') return { dniNie: 'X1234567L' };",
+              "      return { pesel: '44051401458' };",
+              "    }",
+              "    if (stepCode === 'contact') return { email: 'customer@example.com', phone: '+4612345678', address: 'Main Street 1', province: country === 'SPAIN' ? 'Madrid' : undefined };",
+              "    if (stepCode === 'compliance') return { consentAccepted: true, pepDeclaration: 'NO', taxResidency: country };",
+              "    if (stepCode === 'financial') return { employmentStatus: 'EMPLOYED', monthlyIncome: 45000, monthlyDebt: 5000, housingCosts: 9000, dependants: 1 };",
+              "    if (stepCode === 'review') return { termsAccepted: true };",
+              "  }",
+              "  if (stepCode === 'company') {",
+              "    if (country === 'SWEDEN') return { organisationNumber: '556016-0680', legalName: 'Example AB', legalForm: 'AB' };",
+              "    if (country === 'SPAIN') return { companyNif: 'B12345678', legalName: 'Example SL', legalForm: 'SL', registeredAddress: 'Calle Mayor 1' };",
+              "    return { companyIdentifier: '1234567890', legalName: 'Example Sp z o.o.', legalForm: 'SP_ZOO' };",
+              "  }",
+              "  if (stepCode === 'representative') return { representativeName: 'Alex Example', representativeIdentifier: 'ID123', authorityConfirmed: true };",
+              "  if (stepCode === 'owners') return { beneficialOwners: [{ name: 'Owner Example', ownership: 60 }] };",
+              "  if (stepCode === 'business') return { businessActivity: 'Retail', annualTurnover: 1200000, expectedUsage: 'Payments', sector: 'Retail', vatStatus: 'ACTIVE' };",
+              "  if (stepCode === 'decision') return { creditConsent: true, iban: 'SE4550000000058398257466' };",
+              "  if (stepCode === 'review') return { termsAccepted: true };",
+              "  return {};",
+              "};",
+              "pm.collectionVariables.set('stepCode', step.code);",
+              "pm.collectionVariables.set('stepBody', JSON.stringify({ answers: answersFor(country, customerType, step.code) }));"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('step accepted: ' + pm.collectionVariables.get('stepCode'), function () { pm.response.to.have.status(200); });",
+              "const steps = JSON.parse(pm.collectionVariables.get('flowSteps') || '[]');",
+              "const nextIndex = Number(pm.collectionVariables.get('stepIndex') || '0') + 1;",
+              "pm.collectionVariables.set('stepIndex', String(nextIndex));",
+              "postman.setNextRequest(nextIndex < steps.length ? 'Run Scenario - Submit Next Step' : 'Run Scenario - Run Checks');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{{stepBody}}"
+        },
+        "url": "{{baseUrl}}/api/v1/applications/{{applicationId}}/steps/{{stepCode}}"
+      }
+    },
+    {
+      "name": "Run Scenario - Run Checks",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('checks executed', function () { pm.response.to.have.status(200); });",
+              "pm.collectionVariables.set('integrationResults', pm.response.text());",
+              "postman.setNextRequest('Run Scenario - Submit Application');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/applications/{{applicationId}}/checks",
+        "header": [
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Run Scenario - Submit Application",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('application submitted', function () { pm.response.to.have.status(200); });",
+              "const body = pm.response.json();",
+              "const expected = pm.collectionVariables.get('expectedFinalStatus');",
+              "pm.test('final status is ' + expected + ' for ' + pm.collectionVariables.get('scenarioName'), function () {",
+              "  pm.expect(body.status).to.eql(expected);",
+              "});",
+              "postman.setNextRequest(expected === 'AGREEMENT_CREATED' ? 'Run Scenario - Create Agreement' : 'Run Scenario - Audit Events');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/applications/{{applicationId}}/submit",
+        "header": [
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Run Scenario - Create Agreement",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('agreement created', function () { pm.response.to.have.status(200); });",
+              "pm.test('agreement mock passed', function () { pm.expect(pm.response.json().outcome).to.eql('PASS'); });",
+              "postman.setNextRequest('Run Scenario - Sign Agreement');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/applications/{{applicationId}}/agreement",
+        "header": [
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Run Scenario - Sign Agreement",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('agreement signed', function () { pm.response.to.have.status(200); });",
+              "pm.test('signing mock passed', function () { pm.expect(pm.response.json().outcome).to.eql('PASS'); });",
+              "postman.setNextRequest('Run Scenario - Account Setup');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/applications/{{applicationId}}/agreement/sign",
+        "header": [
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Run Scenario - Account Setup",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('account setup completed', function () { pm.response.to.have.status(200); });",
+              "pm.test('account setup mock passed', function () { pm.expect(pm.response.json().outcome).to.eql('PASS'); });",
+              "postman.setNextRequest('Run Scenario - Audit Events');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/v1/applications/{{applicationId}}/account-setup",
+        "header": [
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Run Scenario - Audit Events",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('audit trail returned', function () { pm.response.to.have.status(200); });",
+              "pm.test('audit trail is not empty', function () { pm.expect(pm.response.json().length).to.be.above(0); });",
+              "postman.setNextRequest(null);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/v1/applications/{{applicationId}}/audit-events",
+        "header": [
+          {
+            "key": "X-Transaction-Id",
+            "value": "{{transactionId}}"
+          },
+          {
+            "key": "X-Trace-Id",
+            "value": "{{traceId}}"
+          },
+          {
+            "key": "X-Product-Code",
+            "value": "ONBOARDING"
+          },
+          {
+            "key": "X-Channel",
+            "value": "POSTMAN"
+          }
+        ]
+      }
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('transactionId')) { pm.collectionVariables.set('transactionId', pm.variables.replaceIn('{{$guid}}')); }",
+          "if (!pm.collectionVariables.get('traceId')) { pm.collectionVariables.set('traceId', pm.variables.replaceIn('{{$guid}}')); }"
+        ]
+      }
+    }
+  ]
+}
