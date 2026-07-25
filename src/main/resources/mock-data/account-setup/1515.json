@@ -1,0 +1,6 @@
+{
+  "outcome": "MANUAL_REVIEW",
+  "reasonCode": "ACCOUNT_SETUP_PENDING_OPERATIONS",
+  "message": "Account setup requires operations review",
+  "attributes": {}
+}

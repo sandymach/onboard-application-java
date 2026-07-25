@@ -1,0 +1,8 @@
+{
+  "outcome": "MANUAL_REVIEW",
+  "reasonCode": "ADDITIONAL_DOCUMENT_REQUIRED",
+  "message": "Additional identity document is required",
+  "attributes": {
+    "confidence": "MEDIUM"
+  }
+}

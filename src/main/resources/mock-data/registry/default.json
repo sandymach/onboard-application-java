@@ -1,0 +1,8 @@
+{
+  "outcome": "PASS",
+  "reasonCode": "ACTIVE_COMPANY",
+  "message": "Company is active in the registry",
+  "attributes": {
+    "companyStatus": "ACTIVE"
+  }
+}

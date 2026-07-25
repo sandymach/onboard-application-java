@@ -1,0 +1,8 @@
+{
+  "outcome": "FAIL",
+  "reasonCode": "DISSOLVED_COMPANY",
+  "message": "Company is dissolved",
+  "attributes": {
+    "companyStatus": "DISSOLVED"
+  }
+}

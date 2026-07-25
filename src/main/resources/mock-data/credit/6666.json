@@ -1,0 +1,8 @@
+{
+  "outcome": "MANUAL_REVIEW",
+  "reasonCode": "BORDERLINE_SCORE",
+  "message": "Credit score requires manual assessment",
+  "attributes": {
+    "score": "560"
+  }
+}

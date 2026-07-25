@@ -1,0 +1,9 @@
+{
+  "outcome": "PASS",
+  "reasonCode": "AGREEMENT_CREATED",
+  "message": "Agreement document package was created",
+  "attributes": {
+    "agreementId": "mock-agreement-default",
+    "documentType": "ACCOUNT_TERMS"
+  }
+}

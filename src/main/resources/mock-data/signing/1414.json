@@ -1,0 +1,6 @@
+{
+  "outcome": "MANUAL_REVIEW",
+  "reasonCode": "SIGNING_REQUIRES_FOLLOW_UP",
+  "message": "Customer selected sign later and requires follow-up",
+  "attributes": {}
+}

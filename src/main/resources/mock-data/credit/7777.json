@@ -1,0 +1,8 @@
+{
+  "outcome": "FAIL",
+  "reasonCode": "UNAFFORDABLE",
+  "message": "Affordability requirements were not met",
+  "attributes": {
+    "score": "380"
+  }
+}

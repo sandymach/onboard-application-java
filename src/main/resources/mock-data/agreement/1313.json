@@ -1,0 +1,6 @@
+{
+  "outcome": "FAIL",
+  "reasonCode": "AGREEMENT_TEMPLATE_UNAVAILABLE",
+  "message": "Agreement template could not be created",
+  "attributes": {}
+}

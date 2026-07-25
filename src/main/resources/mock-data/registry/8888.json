@@ -1,0 +1,6 @@
+{
+  "outcome": "MANUAL_REVIEW",
+  "reasonCode": "UNKNOWN_REPRESENTATIVE",
+  "message": "Representative authority could not be confirmed",
+  "attributes": {}
+}

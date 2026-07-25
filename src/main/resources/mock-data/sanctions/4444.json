@@ -1,0 +1,6 @@
+{
+  "outcome": "MANUAL_REVIEW",
+  "reasonCode": "POSSIBLE_HIT",
+  "message": "Possible sanctions match requires review",
+  "attributes": {}
+}

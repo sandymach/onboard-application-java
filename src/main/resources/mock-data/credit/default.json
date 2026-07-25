@@ -1,0 +1,8 @@
+{
+  "outcome": "PASS",
+  "reasonCode": "AFFORDABLE",
+  "message": "Credit and affordability checks passed",
+  "attributes": {
+    "score": "720"
+  }
+}

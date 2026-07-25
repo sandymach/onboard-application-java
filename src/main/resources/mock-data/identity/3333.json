@@ -1,0 +1,8 @@
+{
+  "outcome": "FAIL",
+  "reasonCode": "DOCUMENT_MISMATCH",
+  "message": "Identity information could not be verified",
+  "attributes": {
+    "confidence": "LOW"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "outcome": "PASS",
+  "reasonCode": "ACCOUNT_CREATED",
+  "message": "Customer account was created and activated",
+  "attributes": {
+    "accountId": "mock-account-default",
+    "iban": "SE4550000000058398257466"
+  }
+}

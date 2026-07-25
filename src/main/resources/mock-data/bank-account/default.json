@@ -1,0 +1,6 @@
+{
+  "outcome": "PASS",
+  "reasonCode": "IBAN_VERIFIED",
+  "message": "Bank account was verified",
+  "attributes": {}
+}

@@ -1,0 +1,8 @@
+{
+  "outcome": "PASS",
+  "reasonCode": "IDENTITY_VERIFIED",
+  "message": "Identity verified successfully",
+  "attributes": {
+    "confidence": "HIGH"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "outcome": "PASS",
+  "reasonCode": "SIGNING_READY",
+  "message": "Agreement signing was completed or deferred successfully",
+  "attributes": {
+    "signingMethod": "MOCK_EID"
+  }
+}
